@@ -63,7 +63,7 @@ struct Game {
 
 trait MessagingLayer {
     // Block until game is ready
-    fn start(&self, game_id: GameId, main_player: Player, stranger: Player, sender: Receiver<TxtMessage>) -> Game;
+    fn start(&self, game_id: GameId, main_player: Player, stranger: Player, sender: Receiver<TxtMessage>, busy_players: BusyPlayers) -> Game;
     fn new_game_id(&self) -> GameId;
 }
 
@@ -80,7 +80,7 @@ struct TwilioLayer {
 }
 
 impl MessagingLayer for TwilioLayer {
-    fn start(&self, game_id: GameId, main_player: Player, stranger: Player, receiver: Receiver<TxtMessage>) -> Game {
+    fn start(&self, game_id: GameId, main_player: Player, stranger: Player, receiver: Receiver<TxtMessage>, busy_players: BusyPlayers) -> Game {
 
         let mut friend: Option<Player> = None;
 
@@ -93,11 +93,11 @@ impl MessagingLayer for TwilioLayer {
         };
 
         main_player.send_msg(&format!("This is your game code: {}", game_id));
-        main_player.send_msg(&format!("Have a friend join by texting: friend join {}", game_id));
+        main_player.send_msg(&format!("Have a friend join by texting: join {}", game_id));
 
         loop {
             let m = receiver.recv().unwrap();
-            if m.body.to_lowercase() == format!("friend join {}", game_id) {
+            if m.body.to_lowercase() == format!("join {}", game_id) && !busy_players.lock().unwrap().contains(&m.from) {
                 let p = Player{player_id: m.from};
                 main_player.send_msg_to_other_player(&p, "[ref] Welcome friend!");
                 main_player.send_msg(&format!("[ref] Your friend at {} has joined!\nRemember type: \"stranger danger\" if you think this is a stranger\nand type: \"buddy buddy\" if this is your friend.\nStart Chatting!", p.player_id.clone()));
@@ -221,7 +221,7 @@ fn start_game(main_player: Player, stranger: Player, twilio_layer: TwilioLayer, 
 
     listeners.lock().unwrap().push(tx);
 
-    let game = twilio_layer.start(game_id, main_player, stranger, rx);
+    let game = twilio_layer.start(game_id, main_player, stranger, rx, busy_players.clone());
 
     let stranger_id = game.stranger.player_id.clone();
 
