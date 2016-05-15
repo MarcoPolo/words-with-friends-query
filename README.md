@@ -14,7 +14,7 @@ We'll wait for a stranger to join the party and then give you a friend code.
 
 ## How to play as a friend
 
-Have your guesser friend send you the friend code and text: **join [friend code]** to _906 506 1337_
+Have your guesser friend send you the friend code and text: **join [friend code]** to _906 563 1337_
 
 
 ## How to run
