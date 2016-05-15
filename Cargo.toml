@@ -1,0 +1,10 @@
+[package]
+name = "words-with-friends-query"
+version = "0.1.0"
+authors = ["Marco Munizaga <marco@marcopolo.io>"]
+
+[dependencies]
+rand = "0.3"
+twilio = { git = "https://github.com/MarcoPolo/twilio-rs.git" }
+hyper = "0.9.4"
+rustc-serialize = "0.3.19"
