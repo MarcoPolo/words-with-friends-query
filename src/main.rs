@@ -23,7 +23,7 @@ use std::io::Read;
 type GameMsg = TxtMessage;
 type PlayerId = String;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Player {
     player_id: PlayerId,
 }
@@ -223,7 +223,8 @@ fn start_game(main_player: Player, stranger: Player, twilio_layer: TwilioLayer, 
 
     let game = twilio_layer.start(game_id, main_player, stranger, rx, busy_players.clone());
 
-    let stranger_id = game.stranger.player_id.clone();
+    let stranger_clone = game.stranger.clone();
+    let friend_clone = game.friend.clone();
 
     let partner: Player;
     let flip_result = coin_flip();
@@ -249,16 +250,26 @@ fn start_game(main_player: Player, stranger: Player, twilio_layer: TwilioLayer, 
 
     println!("Partner is: {:?}", partner.player);
     main_player.send_msg("[Ref]: We've matched you up and you're ready to go!");
+    main_player.send_msg("[Ref]: You win if you guess if you're talking to a friend or a stranger correctly!");
     partner.send_msg("[Ref]: We've matched you up and you're ready to go!");
 
     match flip_result {
         CoinFlip::Friend => {
             // Remove the stranger from busy players
-            busy_players.lock().unwrap().remove(&stranger_id);
+            busy_players.lock().unwrap().remove(&stranger_clone.player_id);
             // Add our friend to busy players
             busy_players.lock().unwrap().insert(partner.player.player_id.clone());
+
+            partner.send_msg("[Ref]: The game has started!");
+            partner.send_msg("[Ref]: You win this game if you convince your friend that you are a stranger!\nGame On!!");
         },
-        _ => {}
+        CoinFlip::Stranger => {
+            partner.send_msg_to_other_player(&friend_clone, "[Ref]: We've matched your friend up to a stranger. Don't spoil it!");
+            partner.send_msg_to_other_player(&friend_clone, "[Ref]: You are out of this game now, but you can join or start another game");
+            partner.send_msg("[Ref]: The game has started!");
+            partner.send_msg("[Ref]: You win this game if you convince the other person you are their friend\nGame On!!");
+
+        }
     }
 
     loop {
