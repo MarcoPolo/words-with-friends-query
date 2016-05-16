@@ -171,7 +171,7 @@ impl TwilioListener {
                 }
             }
 
-            std::thread::sleep(std::time::Duration::new(5, 0));
+            std::thread::sleep(std::time::Duration::new(1, 0));
         }
 
     }
